@@ -4,12 +4,11 @@
 [![Docker Cloud Build](https://img.shields.io/docker/cloud/build/0xf15h/ghidra.svg?style=popout)](https://github.com/parhamzardoshti/CI-CD/)
 [![Build Status](https://ci.jenkins.io/buildStatus/icon?job=Plugins/jacoco-plugin/master)](https://github.com/parhamzardoshti/CI-CD/)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3538/badge)](https://github.com/parhamzardoshti/CI-CD/)
-
-What is Continuous Delivery Pipeline
-### 1.BUILD 2.DEPLOY 3.TEST 4.RELEASE 
+ 
 
 ## Jenkins Pipeline
-DevOps is a set of practices that combines software development (Dev) and information-technology operations (Ops) which aims to shorten the systems development life cycle in high quality 
+DevOps is a set of practices that combines software development (Dev) and information-technology operations (Ops) which aims to shorten the systems development life cycle in high quality
+and now for that im going to use Jenkins pipelines
 
 ## the project goal
 the main purpose of this project is making simple templates base on DevOps concepts by using common tools like Docker,  Kubernetes,  Ansible, Jenkins which can be usefull for practicing purposes and contributing
