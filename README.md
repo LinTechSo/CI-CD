@@ -19,5 +19,5 @@ the main purpose of this project is making simple templates base on DevOps conce
 this project tested on centos and fedora (redhat base) and also you should config your jenkins and also have basic knowlege in this area
 
 ## contribute
-developing and bug fixing of this project will be usefull for everyone so  i appreciated that if you want  to help me to develop this project
+developing and bug fixing in this project will be usefull for everyone so  i appreciated that if you want  to help me to develop this project
 <a href="https://github.com/parhamzardoshti/CI-CD/blob/master/TODO.md">ToDo</a>
