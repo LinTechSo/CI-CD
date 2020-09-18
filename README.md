@@ -8,7 +8,7 @@
 
 ## Jenkins Pipeline
 DevOps is a set of practices that combines software development (Dev) and information-technology operations (Ops) which aims to shorten the systems development life cycle in high quality
-however im going to use Jenkins pipelines for our DevOps base project
+however in this case im going to use Jenkins pipelines for our DevOps base project
 
 ## the project goal
 the main purpose of this project is making simple templates base on DevOps concepts by using common tools like Docker,  Kubernetes,  Ansible, Jenkins which can be usefull for practicing purposes and contributing
