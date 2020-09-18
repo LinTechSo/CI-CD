@@ -1,0 +1,29 @@
+pipline {
+    agent none
+    stages {
+        stage('build') {
+            agent {
+                docker {
+                    image 'maven:3-alpine'
+                    label 'parham'
+                    args '-v /root/.m2:/root/.m2'
+                }
+            }
+            steps {
+                sh 'mvn -X -U clean install'
+                stash includes: '**/*.war', name:'app'
+            }
+        }
+
+        stage('deploy'){
+            agent { label 'master'}
+            steps {
+                unstash 'app'
+                sh 'docker ps -f name=helloapp -q | xargs --no-run-if-empty docker container stop'
+                sh 'docker container ls -a -fname=helloapp -q | xargs -r docker container rm'
+                sh 'docker build -t helloapp . '
+                sh 'docker run -itd -p 8081:8080 helloapp:latest'
+            }
+        }
+    }
+}

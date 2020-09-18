@@ -1,0 +1,16 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "centos/7"
+  config.vm.hostname = "nodjs"
+  config.ssh.insert_key = false
+  config.vm.synced_folder ".", "/vagrant", disabled: true
+  config.vm.provider :libvirt do |l|
+    l.memory = 512
+  end
+
+  config.vm.provision "ansible" do |ansible|
+    ansible.playbook = "Deploy.yml"
+  end
+end

@@ -1,0 +1,42 @@
+pipeline {
+    agent none
+    stages {
+        stage ('Make Docker image') {
+            agent { label 'master'}
+            steps {
+                sh 'docker ps -f name=golanghello -q | xargs --no-run-if-empty docker container stop'
+                sh 'docker container ls -a -fname=golanghello -q | xargs -r docker container rm'
+                sh 'docker build -t golanghello . '
+                sh 'docker save golanghello:latest > golang.tar'
+                stash includes: 'golang.tar', name:'goimage'
+            }
+        }
+        stage ('Test Docker image') {
+            agent {
+                docker {
+                    image 'golanghello'
+                    label 'master'
+                }
+            }
+            steps {
+                sh 'go clean --cache'
+                sh 'go build'
+                sh 'go test'
+            }
+        }        
+        stage ('Get an Image and Setup golang container') {
+            agent { label 'master' }
+            steps {
+                unstash 'goimage'
+                sh 'docker ps -f name=golanghello -q | xargs --no-run-if-empty docker container stop'
+                sh 'docker container ls -a -fname=golanghello -q | xargs -r docker container rm'               
+                sh 'docker run -itd --name golang golanghello:latest'
+            }
+            post {
+                success {
+                    sh 'echo $(docker logs golang)'
+                }
+            }
+        }
+    }
+}

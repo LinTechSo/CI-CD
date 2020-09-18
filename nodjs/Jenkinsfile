@@ -1,0 +1,38 @@
+pipeline {
+    agent none
+    stages {
+        stage ('Build image') {
+            agent { label 'master'}
+                steps {
+                    sh 'docker ps -f name=mynodejs -q | xargs --no-run-if-empty docker container stop'
+                    sh 'docker container ls -a -fname=mynodejs -q | xargs -r docker container rm'
+                    sh 'docker build -t mynodejs ./app/ '
+                }
+            }
+            stage ('Test container') {
+                agent {
+                    docker {
+                        label 'master'
+                        image 'mynodejs:latest'
+                    }
+                }
+                steps {
+                    sh 'cd app && npm install request'
+                    sh 'cd app && npm install mocha chai'
+                    sh 'nohup node app/server.js &'
+                    sh 'cd app && npm test'
+                }
+            }
+            stage ('Deploy app') {
+                agent {
+                    label 'parham'
+                }
+                when {
+                    expression {env.GIT_BRANCH == 'origin/master'}
+                }
+                steps {
+                    sh 'vagrant up'
+                }
+            }
+    }
+}
