@@ -1,0 +1,27 @@
+---
+
+- name: Install Gitlab via docker-compose
+  hosts: web
+  tasks:
+    - name: set fact
+      set_fact: compose_dir=/tmp/deploy
+
+    - file: 
+        path: "{{ compose_dir }}"
+        state: directory
+
+    - name: Upload docker-compose files
+      synchronize: 
+        src: "./"
+        dest: "{{ compose_dir }}"
+
+
+    - name: Make sure compose service is up
+      docker_compose:
+        project_src: /tmp/deploy/Deploy/
+        state: present
+        files:
+          - "docker-compose.yml"
+
+    - name: exec docker and fix permissions
+      command: docker exec -it ngx chown -R nginx:nginx /src/blog/static/
