@@ -17,7 +17,6 @@ pipeline {
                 sh 'chmod +x owasp-dependency-check.sh'
                 sh 'bash owasp-dependency-check.sh'
                 sh 'cat /home/parham/OWASP-Dependency-Check/reports/dependency-check-report.xml'
-                
             }
         }
         stage ('SAST') {
@@ -32,10 +31,18 @@ pipeline {
                 withSonarQubeEnv('sonar') {
                     sh 'mvn sonar:sonar'
                     sh 'cat target/sonar/report-task.txt'
+                    script {
+                        timeout(time: 1, unit: 'MINUTES') {
+                            def qg = waitForQualityGate()
+                            if (qg.status != 'OK') {
+                                error "Pipeline aborted due to quality gate failure: ${qg.status}"
+                            }
+                        }
+                    }
                 }
             }
         }
-        stage ('Build'){
+        stage ('Build App'){
             agent {
                 docker {
                     image 'maven:3-alpine'
@@ -44,12 +51,13 @@ pipeline {
                 }
             }
             steps {
+                echo '> package java app on docker container ...'
                 sh 'mvn clean package'
                 stash includes: '**/*.war', name:'app'
 
             }
         }
-        stage ('Prepare deployment envireonment'){
+        stage ('Prepare Deployment Envireonment'){
             agent { label 'parham'}
             steps {
                 echo '> Prepare deployment envireonment ...'
@@ -58,12 +66,22 @@ pipeline {
         }
         stage ('Deploy App') {
             agent { label 'parham'}
+            when {
+                branch 'master'
+            }
             steps {
                 unstash 'app'
                 echo '> Deploying the application into production environment ...'
                 sshagent(['tomcat']) {
                     sh 'scp -o StrictHostKeyChecking=no target/*.war root@webapp:/opt/tomcat/webapps/'
                 }                
+            }
+            post {
+                failure {
+                    mail to: 'scietechso@gmail.com',
+                        subject: "Failed Pipeline: ${currentBuild.fullDisplayName}",
+                        body: "Something is wrong with ${env.BUILD_URL}"
+                }
             }
         }
         stage ('DAST') {
