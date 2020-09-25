@@ -1,0 +1,78 @@
+pipeline {
+    agent none
+    stages {
+        stage ('Check-Git-Secrets') {
+            agent {label 'master'}
+            steps {
+                sh 'rm trufflehog || true'
+                sh 'docker run gesellix/trufflehog --json https://github.com/lintechso/webapp.git > trufflehog'
+                sh 'cat trufflehog'
+            }
+        }
+        stage ('Source Composition Analysis') {
+            agent {label 'parham'}
+            steps {
+                sh 'rm owasp* || true'
+                sh 'wget "https://raw.githubusercontent.com/lintechso/webapp/master/owasp-dependency-check.sh" '
+                sh 'chmod +x owasp-dependency-check.sh'
+                sh 'bash owasp-dependency-check.sh'
+                sh 'cat /home/parham/OWASP-Dependency-Check/reports/dependency-check-report.xml'
+                
+            }
+        }
+        stage ('SAST') {
+            agent {
+                docker {
+                    image 'maven:3-alpine'
+                    label 'parham'
+                    args '-v /root/.m2:/root/.m2'
+                }
+            }
+            steps {
+                withSonarQubeEnv('sonar') {
+                    sh 'mvn sonar:sonar'
+                    sh 'cat target/sonar/report-task.txt'
+                }
+            }
+        }
+        stage ('Build'){
+            agent {
+                docker {
+                    image 'maven:3-alpine'
+                    label 'parham'
+                    args '-v /root/.m2:/root/.m2'
+                }
+            }
+            steps {
+                sh 'mvn clean package'
+                stash includes: '**/*.war', name:'app'
+
+            }
+        }
+        stage ('Prepare deployment envireonment'){
+            agent { label 'parham'}
+            steps {
+                echo '> Prepare deployment envireonment ...'
+                ansiblePlaybook credentialsId: 'ansible',inventory: 'hosts', playbook: 'tomcat.yml'
+            }
+        }
+        stage ('Deploy App'){
+            agent { label 'parham'}
+            steps {
+                unstash 'app'
+                echo '> Deploying the application into production environment ...'
+                sshagent(['tomcat']) {
+                    sh 'scp -o StrictHostKeyChecking=no target/*.war root@vagrant:/opt/tomcat/webapps/'
+                }                
+            }
+        }
+        stage ('DAST') {
+            agent { label 'parham'}
+            steps {
+                sshagent(['zap']) {
+                sh 'ssh -o  StrictHostKeyChecking=no root@vagrant "docker run -t owasp/zap2docker-stable zap-baseline.py -t http://localhost/webapp/" || true'
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,51 @@
+---
+- name: prepare deployment environment
+  hosts: web
+  become: yes
+  tasks: 
+    - name: Download Apache Tomcat
+      get_url: url=https://downloads.apache.org/tomcat/tomcat-9/v9.0.38/bin/apache-tomcat-9.0.38.tar.gz dest=/opt/
+
+    - name: Extract and Install Tomcat
+      unarchive:
+        src: /opt/apache-tomcat-9.0.38.tar.gz
+        dest: /opt/
+        remote_src: yes
+
+    - name: Create link for  Tomcat
+      file:
+        src: "apache-tomcat-9.0.38"
+        dest: /opt/tomcat
+        state: link
+
+    - name: Copy tomcat service file
+      template:
+        src: tomcat.service.j2
+        dest: /etc/systemd/system/tomcat.service
+      when: ansible_service_mgr == "systemd"
+
+
+    - name: configure server.xml
+      template:
+        src: server.xml.j2
+        dest: /opt/tomcat/conf/server.xml
+
+    - name: config tomcat part1
+      template:
+        src: catalina.properties.j2
+        dest: /opt/tomcat/conf/catalina.properties
+
+    - name: config tomcat part2
+      template:
+        src: context.xml.j2
+        dest: /opt/tomcat/conf/context.xml
+
+    - name: reload systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: enable and start tomcat
+      service:
+        name: tomcat
+        enabled: yes
+        state: started
