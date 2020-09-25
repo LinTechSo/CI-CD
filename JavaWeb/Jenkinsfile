@@ -56,13 +56,13 @@ pipeline {
                 ansiblePlaybook credentialsId: 'ansible',inventory: 'hosts', playbook: 'tomcat.yml'
             }
         }
-        stage ('Deploy App'){
+        stage ('Deploy App') {
             agent { label 'parham'}
             steps {
                 unstash 'app'
                 echo '> Deploying the application into production environment ...'
                 sshagent(['tomcat']) {
-                    sh 'scp -o StrictHostKeyChecking=no target/*.war root@vagrant:/opt/tomcat/webapps/'
+                    sh 'scp -o StrictHostKeyChecking=no target/*.war root@webapp:/opt/tomcat/webapps/'
                 }                
             }
         }
@@ -70,7 +70,7 @@ pipeline {
             agent { label 'parham'}
             steps {
                 sshagent(['zap']) {
-                sh 'ssh -o  StrictHostKeyChecking=no root@vagrant "docker run -t owasp/zap2docker-stable zap-baseline.py -t http://localhost/webapp/" || true'
+                sh 'ssh -o  StrictHostKeyChecking=no root@webapp "docker run -t owasp/zap2docker-stable zap-baseline.py -t http://localhost/webapp/" || true'
                 }
             }
         }

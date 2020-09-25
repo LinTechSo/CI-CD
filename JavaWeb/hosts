@@ -1,0 +1,2 @@
+[web]
+webapp ansible_ssh_user=root
