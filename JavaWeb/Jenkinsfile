@@ -77,9 +77,7 @@ pipeline {
         stage ('DAST') {
             agent { label 'parham'}
             steps {
-                sshagent(['zap']) {
                 sh 'ssh -o  StrictHostKeyChecking=no root@webapp "docker run -t owasp/zap2docker-stable zap-baseline.py -t http://localhost/webapp/" || true'
-                }
             }
         }
     }
