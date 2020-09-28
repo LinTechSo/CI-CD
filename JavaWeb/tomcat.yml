@@ -2,6 +2,8 @@
 - name: prepare deployment environment
   hosts: web
   become: yes
+  pre_tasks:
+    - import_tasks: java.yml
   tasks: 
     - name: Download Apache Tomcat
       get_url: url=https://downloads.apache.org/tomcat/tomcat-9/v9.0.38/bin/apache-tomcat-9.0.38.tar.gz dest=/opt/
