@@ -1,0 +1,11 @@
+---
+
+
+# MySQL settings
+mysqlservice: mysqld
+mysql_port: 3306
+
+# These are the WordPress database settings
+db_name: django
+db_user: parham
+db_password: secret

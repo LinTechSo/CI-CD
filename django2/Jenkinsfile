@@ -1,0 +1,118 @@
+pipeline {
+    agent none
+    stages {
+        stage ('Check-Git-secrets') {
+            agent { label 'parham' }
+            steps {
+                echo 'Checking Git secrets'
+                sh 'rm trufflehog || true'
+                sh 'docker run gesellix/trufflehog --json http://localhost:10080/parham/django.git > trufflehog'
+                sh 'cat trufflehog'
+            }
+        }
+        stage ('Source Composition Analysis') {
+            agent { label 'parham'}
+            steps {
+                sh 'rm owasp* || true'
+                sh 'wget "http://localhost:10080/parham/django/-/raw/master/owasp-dependency-check.sh" '
+                sh 'chmod +x owasp-dependency-check.sh'
+                sh 'bash owasp-dependency-check.sh'
+                sh 'cat /home/parham/OWASP-Dependency-Check/reports/dependency-check-report.xml'            
+            }
+        }
+        stage ('Build Project in DevEnv With Docker Compose') {
+            agent { label 'parham'}
+            steps {
+                sh 'docker-compose up -d --build'
+                sh 'docker exec -it ngx chown -R nginx:nginx /src/blog/static/'
+                echo '> Basic Test For Basic Health Functionality ....'
+                sh '''#!/bin/bash
+                    pkg=curl
+                    which $pkg > /dev/null 2>&1
+                    if [ $? == 0 ];then
+                            echo "$pkg is already installed."
+                    else
+                            echo "installed dependencies"
+                            sudo yum install $pkg -y
+                    fi
+                    ip=$(ip addr | grep inet | head -3 | tail -1 | cut -c10-24 | cut -d '/' -f1)
+                    res=$(curl --write-out "%{http_code}\n" --silent --output /dev/null "$ip")
+                    if [ $res == "200" ];then
+                            echo "[+] we got 200 response"
+                            echo ''
+                            echo "[+] Test level one passed...."
+                            echo ''
+                    else
+                            echo "[-] Error: we received $res response"
+                            exit 1
+                    fi
+                '''
+            }
+            post {
+                success {
+                    echo '$(docker-compose ps)'
+                }
+                failure {
+                    echo '> Docker Compose Building Failed ....'
+                    sh 'docker-compose down'
+                }
+            }
+        }
+        stage ('Security Analysis and Function Test') {
+            agent {
+                dockerfile {
+                    dir 'test'
+                    label 'parham'
+                    args '-v /tmp/:/root/.wapiti/generated_report/'
+                }
+            }
+            steps {
+                sh 'wapiti -u http://192.168.2.8/'
+            }
+            post {
+                success {
+                    echo '> Successed in Security Test Stage ...'
+                    sh 'docker-compose down' 
+                }
+                failure {
+                    echo '> Failed in Security Test Stage ...'
+                    sh 'docker-compose down'
+                }
+            }
+        }
+        stage ('Deploy to Centos Server'){
+            agent { label 'prod'}
+            when {
+                expression {env.GIT_BRANCH == 'origin/master'}
+            }            
+            input {
+                message 'Continue to Deploy?'
+            }
+            steps {
+                sh 'mv django.env.example django.env'
+                echo '> Deploying the application into production environment ...'
+                sh 'vagrant up'
+                //ansiblePlaybook credentialsId: 'ansible',inventory: 'hosts', playbook: 'deploy.yml'
+            }
+            post {
+                failure {
+                    mail to: 'scietechso@gmail.com',
+                        subject: "Failed Pipeline: ${currentBuild.fullDisplayName}",
+                        body: "Something is wrong with ${env.BUILD_URL}"
+                }
+                success{
+                    mail to: 'scietechso@gmail.com',
+                        subject: "successful Pipeline: ${currentBuild.fullDisplayName}",
+                        body: "Deploy Finished in ${env.BUILD_URL}" 
+                    echo '$(curl -Ik http://localhost)'
+                }
+            }
+        }
+        stage ('DAST') {
+            agent { label 'parham'}
+            steps {
+                sh 'docker run -t owasp/zap2docker-stable zap-baseline.py -t http://192.168.2.7/ || true'
+            }
+        }
+    }
+}

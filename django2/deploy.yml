@@ -1,0 +1,105 @@
+---
+
+- name: Deploy Django on prod env ( gunicorn, nginx, mariadb installation on centos 7)
+  hosts: all
+  become: yes
+  become_user: root
+  pre_tasks:
+    - import_tasks: mariadb.yml
+  tasks:
+    - name: set fact
+      set_fact: project_dir=/srv/django
+
+    - file:
+        path: "{{ project_dir }}"
+        state: directory
+    
+    - name: Upload project src
+      synchronize:
+        src: "./"
+        dest: "{{ project_dir }}"
+    
+    - name: install dependencies
+      yum: name={{ item }} state=present
+      with_items:
+        - wget
+        - python3-pip
+        - MySQL-python
+        - git
+        - curl
+        - epel-release
+    
+    - name: Install specified python requirements
+      command: pip3 install -r  /srv/django/app/requirements.txt
+
+    - name: mv settings.py to target
+      template:
+        src: settings.py.j2
+        dest: /srv/django/app/mysite/settings.py
+
+    - name: Create Django database
+      mysql_db: name={{ db_name }} state=present
+
+    - name: Create Django database user
+      mysql_user: name={{ db_user }} password={{ db_password }} priv={{ db_name }}.*:ALL host='localhost' state=present
+
+    - name: install nginx
+      yum: name=nginx state=present
+
+    - name: start and enable nginx
+      service: name=nginx enabled=yes state=started 
+
+    - name: give nginx user and group to project src
+      file: path=/srv/django/ owner=nginx group=nginx state=directory recurse=yes
+    
+    - name: install SEManage
+      yum: pkg=policycoreutils-python state=present
+
+    - name: change selinux  /srv/django
+      command: semanage fcontext -a -t httpd_sys_content_t "/srv/django(/.*)?"
+    
+    - name: change selinux srv/django/app/mysite
+      command: semanage fcontext -a -t httpd_sys_script_exec_t "/srv/django/app/mysite/.*\.py" 
+
+    - name: set the SELinux policy for content srv/django/app/blog directory
+      command: semanage fcontext -a -t httpd_sys_rw_content_t "/srv/django/app/blog/templates(/.*)?"
+    
+    - name: set the SELinux policy for wp-config.php
+      command: semanage fcontext -a -t httpd_sys_script_exec_t "/srv/django/app/blog\.py"
+
+    - name: set the SELinux on all the Files
+      command: restorecon -Rv /srv/django
+
+    - name: Copy gunicorn service file
+      template:
+        src: gunicorn.service.j2
+        dest: /etc/systemd/system/gunicorn.service
+      when: ansible_service_mgr == "systemd"
+
+    - name: Copy gunicorn socket file
+      template: 
+        src: gunicorn.socket.j2
+        dest: /etc/systemd/system/gunicorn.socket
+      when: ansible_service_mgr == "systemd"
+    
+    - name: reload systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: start and enable gunicorn
+      service:
+        name: gunicorn
+        enabled: yes
+        state: started
+
+    - name: copy nginx.conf production
+      template:
+        src: nginx.conf
+        dest: /etc/nginx/nginx.conf
+
+    - name: restart nginx
+      service: name=nginx state=restarted
+
+    - name: Start MariaDB Service
+      service: name=mariadb state=restarted 
+      ignore_errors: yes
