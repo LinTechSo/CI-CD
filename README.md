@@ -9,7 +9,7 @@ DevOps is a set of practices that combines software development (Dev) and inform
 however in this case im going to use Jenkins pipeline for our DevOps purpose
 
 ## the project goal
-the main purpose of this simple project is making simple templates base on DevOps concepts by using common tools like Docker,  Kubernetes,  Ansible, Jenkins which can be usefull for practicing purposes and contributing
+the main purpose of this simple project is making simple templates base on DevOps concepts by using common tools like Docker, vagrant, Kubernetes,  Ansible, Jenkins which can be usefull for practicing purposes and contributing
 
 
 ## warning
