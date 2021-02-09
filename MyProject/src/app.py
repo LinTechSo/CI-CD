@@ -1,5 +1,5 @@
 #!/bin/python3
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify,flash
 from flask_mysqldb import MySQL
 import MySQLdb.cursors
 import re
@@ -15,7 +15,7 @@ app.config['MYSQL_DB'] = keys.MYSQL_DB
 
 mysql = MySQL(app)
 
-@app.route('/parham/', methods=['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST'])
 def login():
     msg = ''
     # Check if "username" and "password" POST requests exist (user submitted form)
@@ -36,19 +36,20 @@ def login():
             session['username'] = account['username']
             return redirect(url_for('home'))
         else:
-            msg = 'Incorrect username/password!'
+            msg = 'Incorrect username or password!'
     return render_template('index.html', msg=msg)
 
 
-@app.route('/parham/logout')
+@app.route('/logout')
 def logout():
     # Remove session data, this will log the user out
    session.pop('loggedin', None)
    session.pop('id', None)
    session.pop('username', None)
+   flash('Logged out', 'success')
    return redirect(url_for('login'))
 
-@app.route('/parham/register', methods=['GET', 'POST'])
+@app.route('/register', methods=['GET', 'POST'])
 def register():
     msg = ''
     # Check if "username", "password" and "email" POST requests exist (user submitted form)
@@ -84,7 +85,7 @@ def register():
     return render_template('register.html', msg=msg)
 
 
-@app.route('/parham/home')
+@app.route('/home')
 def home():
     # Check if user is loggedin
     if 'loggedin' in session:
@@ -94,7 +95,7 @@ def home():
     return redirect(url_for('login'))
 
 
-@app.route('/parham /profile')
+@app.route('/profile')
 def profile():
     # Check if user is loggedin
     if 'loggedin' in session:
@@ -107,9 +108,10 @@ def profile():
     # User is not loggedin redirect to login page
     return redirect(url_for('login'))
     
-@app.route('/')
-def hello_world():
-    return 'Hello world'
+@app.route('/v1/ok')
+def health_check():
+    ret = {'message': 'ok'}
+    return jsonify(ret), 200
 
 
 if __name__ == "__main__":

@@ -201,7 +201,7 @@ $RECYCLE.BIN/
 .idea/
 
 # special files
-config.py
+keys.py
 
 ### Fandogh files
 .fandogh/
