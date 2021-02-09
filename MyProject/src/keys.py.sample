@@ -3,10 +3,11 @@
 secret_key = 'your secret key'
 
 
+
 # Mysql configs
 MYSQL_HOST = 'localhost'
 MYSQL_USER = 'parham'
-MYSQL_PASSWORD = 'Azahmadi@4466'
+MYSQL_PASSWORD = 'password'
 MYSQL_DB = 'pythonlogin'
 
 
