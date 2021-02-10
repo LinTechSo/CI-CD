@@ -1,0 +1,18 @@
+[Unit]
+Description=uWSGI instance to serve myapp
+After=network.target
+
+[Unit]
+Description=uWSGI instance to serve myproject
+After=network.target
+
+[Service]
+User=parham
+Group=www-data
+WorkingDirectory=/usr/share/nginx/myapp
+Environment="PATH=/usr/share/myapp/myappenv/bin"
+ExecStart=/usr/share/nginx/myapp/myappenv/bin/uwsgi --ini wsgi.ini
+
+
+[Install]
+WantedBy=multi-user.target
