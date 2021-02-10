@@ -1,24 +1,19 @@
-FROM alpine:3.7
+FROM ubuntu:latest
 
-EXPOSE 5000
+WORKDIR "/srv"
 
-VOLUME /usr/src/app/public
+RUN apt-get update && \
+        apt-get upgrade -y
 
-WORKDIR /usr/src/app
+RUN apt-get update && apt-get install -y python3 python3-pip python3-dev build-essential \
+        && apt-get install mysql-server libmysqlclient-dev -y 
 
-RUN apk add --no-cache \
-        uwsgi-python3 \
-        python3
-        
-COPY . .
+COPY ./requirements.txt /srv/requirements.txt
 
-RUN rm -rf public/*
+RUN pip3 install -r requirements.txt    
 
-
-RUN pip3 install --no-cache-dir -r requirements.txt
-
-
+COPY . /srv
 
 CMD [ "uwsgi", "--socket", "0.0.0.0:5000", \
                "--protocol", "http", \
-               "--wsgi", "wsgi:app" ]
+               "-w", "wsgi:app" ]
