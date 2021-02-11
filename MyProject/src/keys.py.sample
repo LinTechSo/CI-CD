@@ -5,8 +5,8 @@ secret_key = 'your secret key'
 
 
 # Mysql configs
-MYSQL_HOST = 'localhost'
-MYSQL_USER = 'parham'
+MYSQL_HOST = 'db'
+MYSQL_USER = 'root'
 MYSQL_PASSWORD = 'password'
 MYSQL_DB = 'pythonlogin'
 
