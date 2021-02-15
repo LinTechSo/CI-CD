@@ -1,0 +1,68 @@
+pipeline{
+    agent none
+    stages{/*
+        stage("Git_Secret_Checks"){
+            agent {label 'parham'}
+            steps{
+                sh 'rm trufflehog || true'
+                sh 'docker run gesellix/trufflehog --json http://192.168.122.1/Myproject > trufflehog'
+            }
+            post{
+                always{
+                    sh 'cat trufflehog'    
+                }
+            }
+        } 
+        stage("SAST"){
+            agent {label 'parham'}
+            steps {
+                sh 'rm owasp* || true'
+                sh 'wget "https://raw.githubusercontent.com/lintechso/webapp/master/owasp-dependency-check.sh" '
+                sh 'chmod +x owasp-dependency-check.sh'
+                sh 'bash owasp-dependency-check.sh'
+                sh 'cat /home/parham/OWASP-Dependency-Check/reports/dependency-check-report.xml'                
+            }
+        }*/
+        stage("Staging Deployment Test"){
+            agent {label 'parham'}
+            when {
+                branch 'Develop'
+                environment name: 'DEPLOY_TO', value: 'staging'
+            }
+            steps {
+                sh 'cd src/ && docker-compose up -d --build'
+                echo 'Unit Test & integration Test ...'
+                sh 'python3 Unit-Test.py'                
+            }
+            post {
+                success {
+                    sh 'git checkout -b master'
+                    sh 'git merge Develop'
+                }
+                failure {
+                    echo 'Failed'
+                }
+            }
+        }
+        stage("Deploy"){
+            agent {label 'parham'}
+            when {
+                branch 'master'  
+            }
+            steps {
+                echo 'Deploying ....'               
+            }
+        }
+    }
+    post{
+        always{
+            echo "========always========"
+        }
+        success{
+            echo "========pipeline executed successfully ========"
+        }
+        failure{
+            echo "========pipeline execution failed========"
+        }
+    }
+}
