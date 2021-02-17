@@ -5,9 +5,11 @@ secret_key = 'your secret key'
 
 # Mysql configs
 MYSQL_HOST = 'db'
+MYSQL_PORT = 3306
 MYSQL_USER = 'parham'
 MYSQL_PASSWORD = 'password'
 MYSQL_DB = 'pythonlogin'
+
 
 # use [ docker system prune --volumes ]  if needed
 

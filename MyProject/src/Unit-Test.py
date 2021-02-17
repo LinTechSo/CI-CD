@@ -55,7 +55,4 @@ class TestHello(unittest.TestCase):
         self.assertIn(b'You have successfully registered!', response.data)
 
 if __name__ == '__main__':
-    import xmlrunner
-    runner = xmlrunner.XMLTestRunner(output='test-reports')
-    unittest.main(testRunner=runner)
     unittest.main()

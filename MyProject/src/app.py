@@ -8,10 +8,13 @@ app = Flask(__name__)
 
 app.secret_key = keys.secret_key
 
+
+app.config['MYSQL_HOST'] = keys.MYSQL_HOST
+app.config['MYSQL_PORT'] = keys.MYSQL_PORT
 app.config['MYSQL_USER'] = keys.MYSQL_USER
 app.config['MYSQL_PASSWORD'] = keys.MYSQL_PASSWORD
 app.config['MYSQL_DB'] = keys.MYSQL_DB
-app.config['MYSQL_HOST'] = keys.MYSQL_HOST
+
 mysql = MySQL(app)
 
 @app.route('/', methods=['GET', 'POST'])

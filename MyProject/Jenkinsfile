@@ -24,29 +24,30 @@ pipeline{
                 sh 'cat /home/parham/OWASP-Dependency-Check/reports/dependency-check-report.xml'                
             }
         }*/
-        stage("Staging Deployment Test"){
+        stage("Staging Deployment"){
             agent {label 'parham'}
             when {
                 expression {env.GIT_BRANCH == 'origin/dev'}
             }
             steps {
                 sh 'cd src/ && cp keys.py.sample keys.py'
-                sh 'cd src/ && docker-compose up -d'          
+                sh 'cd src/ && docker-compose up -d --build && sleep 10'          
             }
         }
         stage("Staging Deployment Test"){
-            agent {label 'parham'}
+            agent { label 'parham'}
             when {
                 expression {env.GIT_BRANCH == 'origin/dev'}
             }
             steps {
-                sh 'cd src/ && python3 Unit-Test.py'
-                echo "Staging Deployment Test...."            
+                echo "Staging Deployment Test...."          
+                sh 'sleep 10'  
+                sh ' docker exec -i app python3 Unit-Test.py'
             }
             post {
                 success {
                     sh 'git checkout master'
-                    sh 'git merge dev'
+                    sh 'git merge origin/dev'
                 }
                 failure {
                     echo 'Failed'
