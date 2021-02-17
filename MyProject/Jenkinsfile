@@ -1,6 +1,7 @@
 pipeline{
     agent none
-    stages{/*
+    stages{
+        /*
         stage("Git_Secret_Checks"){
             agent {label 'parham'}
             steps{
@@ -26,18 +27,26 @@ pipeline{
         stage("Staging Deployment Test"){
             agent {label 'parham'}
             when {
-                branch 'Develop'
-                environment name: 'DEPLOY_TO', value: 'staging'
+                expression {env.GIT_BRANCH == 'origin/dev'}
             }
             steps {
-                sh 'cd src/ && docker-compose up -d --build'
-                echo 'Unit Test & integration Test ...'
-                sh 'python3 Unit-Test.py'                
+                sh 'cd src/ && cp keys.py.sample keys.py'
+                sh 'cd src/ && docker-compose up -d'          
+            }
+        }
+        stage("Staging Deployment Test"){
+            agent {label 'parham'}
+            when {
+                expression {env.GIT_BRANCH == 'origin/dev'}
+            }
+            steps {
+                sh 'cd src/ && python3 Unit-Test.py'
+                echo "Staging Deployment Test...."            
             }
             post {
                 success {
-                    sh 'git checkout -b master'
-                    sh 'git merge Develop'
+                    sh 'git checkout master'
+                    sh 'git merge dev'
                 }
                 failure {
                     echo 'Failed'
@@ -47,7 +56,7 @@ pipeline{
         stage("Deploy"){
             agent {label 'parham'}
             when {
-                branch 'master'  
+                expression {env.GIT_BRANCH == 'origin/master'}
             }
             steps {
                 echo 'Deploying ....'               

@@ -36,15 +36,6 @@ class TestHello(unittest.TestCase):
         self.assertIn(b'Incorrect username or password!', response.data)
 
     # Ensure logout behaves correctly
-    def test_incorrect_login(self):
-        response = self.app.post(
-            '/', 
-            data=dict(username="t", password="t"),
-            follow_redirects=True
-        )
-        self.assertIn(b'Incorrect username or password!', response.data)
-
-    # Ensure logout behaves correctly
     def test_logout(self):
         self.app.post(
             '/', 

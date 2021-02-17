@@ -2,6 +2,10 @@ CREATE DATABASE pythonlogin;
 
 USE pythonlogin;
 
+CREATE USER 'parham'@'%' IDENTIFIED BY 'password';
+
+GRANT ALL PRIVILEGES ON pythonlogin.* TO 'parham'@'%';	
+
 CREATE TABLE IF NOT EXISTS `accounts` (
 	`id` int(11) NOT NULL AUTO_INCREMENT,
   	`username` varchar(50) NOT NULL,
